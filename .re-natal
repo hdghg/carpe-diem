@@ -5,7 +5,7 @@
     "dev": "env/dev",
     "prod": "env/prod"
   },
-  "modules": [],
+  "modules": ["react-navigation"],
   "imageDirs": [
     "images"
   ],

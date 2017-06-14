@@ -66,4 +66,3 @@ figwheel_server.log
 android/.gradle
 android/app/build/
 android/build/
-android/gradle
