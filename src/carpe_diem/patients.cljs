@@ -1,12 +1,7 @@
 (ns carpe-diem.patients
   (:require [reagent.core :as r :refer [atom]]
-            [reagent.debug :as debug]
             [carpe-diem.create-patient :as cp]
-            [carpe-diem.ui :as ui])
-  )
-
-(defn alert [title]
-  (debug/warn title))
+            [carpe-diem.ui :as ui]))
 
 
 (defn patients-screen [{nav :navigation :as all}]
@@ -18,10 +13,10 @@
                      }
        [ui/text {:style {:color "white" :text-align "center" :font-weight "bold"}} "Create"]]
       [ui/touchable {:style    {:background-color "#999" :padding 10 :border-radius 5 :margin-left 5 :margin-top 5}
-                     :on-press #(alert "Not implemented yet")}
+                     :on-press #(ui/alert "Not implemented yet")}
        [ui/text {:style {:color "white" :text-align "center" :font-weight "bold"}} "Refresh"]]
       [ui/touchable {:style    {:background-color "#999" :padding 10 :border-radius 5 :margin-left 5 :margin-top 5}
-                     :on-press #(alert "Not implemented yet")}
+                     :on-press #(ui/alert "Not implemented yet")}
        [ui/text {:style {:color "white" :text-align "center" :font-weight "bold"}} "Log out"]]]
 
      [ui/view {:style {:margin 10}}

@@ -1,5 +1,6 @@
 (ns carpe-diem.ui
-  (:require [reagent.core :as r]))
+  (:require [reagent.core :as r]
+            [reagent.debug :as debug]))
 
 
 (set! js/React (js/require "react-native"))
@@ -19,3 +20,6 @@
 (def button (r/adapt-react-class (.-Button   js/React)))
 
 (def linking (.-Linking js/React))
+
+(defn alert [title]
+  (js/alert title))
