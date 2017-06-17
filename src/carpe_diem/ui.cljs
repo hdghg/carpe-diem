@@ -11,6 +11,7 @@
 ;; Basic views
 
 (def view (r/adapt-react-class (.-View js/React)))
+(def list-view (r/adapt-react-class (.-ListView js/React)))
 (def scroll (r/adapt-react-class (.-ScrollView js/React)))
 (def image (r/adapt-react-class (.-Image js/React)))
 (def progress-bar (r/adapt-react-class (.-ProgressBarAndroid js/React)))

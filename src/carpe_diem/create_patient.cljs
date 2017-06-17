@@ -4,10 +4,9 @@
             [reagent.core :as r]
             [clojure.string :as str]))
 
-;; TODO remove empty data from request
 (def form (r/atom {:resourceType "Patient"
-                   :name [{:use "usual" :text nil}]
-                   :telecom [{:system "phone" :value nil}]
+                   :name-usual nil
+                   :telecom-phone nil
                    :gender "male"
                    :birthDate nil}))
 (def date-part (r/atom {}))
@@ -26,25 +25,29 @@
       (when (not= datestr (:birthDate @form)) (swap! form assoc :birthDate datestr)))))
 
 (defn submit [success-fn fail-fn]
-  (let [success (atom nil)]
+  (let [name (:name-usual @form) phone (:telecom-phone @form)
+        json-body (js/JSON.stringify
+               (clj->js
+                 (cond-> (select-keys @form [:resourceType :gender :birthDate])
+                         (seq name) (assoc :name [{:use "usual" :text name}])
+                         (seq phone) (assoc :telecom [{:system "phone" :value nil}]))))]
     (-> (js/fetch "https://carpediem.aidbox.io/fhir/Patient"
                   (clj->js {:method "POST" :headers {"Accept"       "application/json"
                                                      "Content-Type" "application/json"}
-                            :body   (js/JSON.stringify (clj->js @form))}))
+                            :body json-body}))
         (.then (fn [resp]
                  (if (.-ok resp)
                    (.json resp)
-                   (-> (.text resp)
-                       (.then #(throw (str % " status: " (.-status resp))))))))
+                   (-> (.text resp) (.then #(throw (str % " status: " (.-status resp))))))))
         (.then success-fn)
         (.catch (fn [error] (js/console.error error))))))
 
 (defn create-patient-screen [{nav :navigation}]
   [ui/scroll
    [ui/text "Name"]
-   [ui/input {:on-change-text (partial swap! form assoc-in [:name 0 :text])}]
+   [ui/input {:on-change-text (partial swap! form assoc :name-usual)}]
    [ui/text "Phone number"]
-   [ui/input {:on-change-text (partial swap! form assoc-in [:telecom 0 :value])}]
+   [ui/input {:on-change-text (partial swap! form assoc :telecom-phone)}]
    [ui/text "Gender"]
    [ui/view {:style {:flex-direction "row" :margin 5}}
     [ui/button {:color    (if (= (:gender @form) "male") "blue" "grey") :title "male"
