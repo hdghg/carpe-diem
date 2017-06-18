@@ -2,6 +2,7 @@
   (:require [reagent.core :as r :refer [atom]]
             [carpe-diem.patients :as patients]
             [carpe-diem.create-patient :as cp]
+            [carpe-diem.patient-info :as pi]
             [reagent.debug :as debug]
             [carpe-diem.ui :as ui]))
 
@@ -19,9 +20,12 @@
 (def stack-router {
                    "Patients" {:screen (nav-wrapper patients/patients-screen "Patients")}
                    "Create" {:screen (nav-wrapper cp/create-patient-screen "Create")}
+                   "Info" {:screen (nav-wrapper pi/patient-info-screen "Patient information")}
                    })
 
 (def sn (r/adapt-react-class (StackNavigator (clj->js stack-router))))
 
 (defn init []
+  (patients/refresh)
+  (cp/reset-form)
   (.registerComponent AppRegistry "CarpeDiem" #(r/reactify-component sn)))

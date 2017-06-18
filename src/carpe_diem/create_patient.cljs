@@ -4,17 +4,19 @@
             [reagent.core :as r]
             [clojure.string :as str]))
 
-(def form (r/atom {:resourceType "Patient"
-                   :name-usual nil
-                   :telecom-phone nil
-                   :gender "male"
-                   :birthDate nil}))
+(def form (r/atom {}))
 (def date-part (r/atom {}))
 
-(defn left-pad [n val]
+(defn- reset-form [] (reset! form {:resourceType "Patient"
+                              :name-usual nil
+                              :telecom-phone nil
+                              :gender "male"
+                              :birthDate nil}))
+
+(defn- left-pad [n val]
   (if (> n (count (str val))) (left-pad n (str 0 val)) (str val)))
 
-(defn update-date-part [keyword value]
+(defn- update-date-part [keyword value]
   (swap! date-part assoc keyword value)
   (let [datestr (str/join "-" [(:year @date-part)
                                (left-pad 2 (:month @date-part))
@@ -24,7 +26,7 @@
       (when (:birthDate @form) (swap! form assoc :birthDate nil))
       (when (not= datestr (:birthDate @form)) (swap! form assoc :birthDate datestr)))))
 
-(defn submit [success-fn fail-fn]
+(defn- submit [success-fn fail-fn]
   (let [name (:name-usual @form) phone (:telecom-phone @form)
         json-body (js/JSON.stringify
                (clj->js
@@ -39,7 +41,7 @@
                  (if (.-ok resp)
                    (.json resp)
                    (-> (.text resp) (.then #(throw (str % " status: " (.-status resp))))))))
-        (.then success-fn)
+        (.then (fn [json] (reset-form) (success-fn)))
         (.catch (fn [error] (js/console.error error))))))
 
 (defn create-patient-screen [{nav :navigation}]

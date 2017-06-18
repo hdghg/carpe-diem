@@ -10,15 +10,17 @@
 
 (def patients (r/atom []))
 
-(defn render-patient [{:keys [name id birthDate] :as person}]
-  [ui/touchable
+(defn render-patient [{:keys [name-usual id birthDate] :as person} nav]
+  [ui/touchable {:on-press #(.navigate nav "Info" person)}
    [ui/view {:style {}}
-    [ui/text {:style {:font-size 20 :font-weight "bold"}} name]
+    [ui/text {:style {:font-size 20 :font-weight "bold"}} name-usual]
     [ui/text birthDate]]])
 
 (defn entry-mapper [entry-element]
   (let [resource (:resource entry-element)]
-    {:id (:id resource) :name (get-in resource [:name 0 :text]) :birthDate (:birthDate resource)}))
+    (-> (select-keys resource [:id :birthDate :gender])
+        (assoc :name-usual (get-in resource [:name 0 :text]))
+        (assoc :telecom-phone (get-in resource [:telecom 0 :value])))))
 
 (defn fill-patients [json]
   (let [data (js->clj json :keywordize-keys true)
@@ -27,8 +29,6 @@
     (reset! patients (map entry-mapper entries))))
 
 (defn refresh []
-  ;; TODO: Remove this call
-  (debug/warn "Refresh called")
   (-> (js/fetch "https://carpediem.aidbox.io/fhir/Patient"
                 (clj->js {:method "GET" :headers {"Accept"       "application/json"
                                                   "Content-Type" "application/json"}}))
@@ -38,7 +38,6 @@
                  (-> (.text resp) (.then #(throw (str % " status: " (.-status resp))))))))
       (.then fill-patients)
       (.catch (fn [error] (js/console.error error)))))
-(refresh)
 
 (defn patients-screen [{nav :navigation :as all}]
   (fn []
@@ -58,7 +57,10 @@
      (if (seq @patients) [ui/list-view
                           {:style      {:margin 10}
                            :dataSource (.cloneWithRows list-view-ds (clj->js @patients))
-                           :render-row (comp r/as-element render-patient #(js->clj % :keywordize-keys true))}]
+                           :render-row #(-> (js->clj % :keywordize-keys true)
+                                            (render-patient nav)
+                                            r/as-element)
+                           }]
                          [ui/text "no data yet"])]))
 
 
