@@ -2,7 +2,9 @@
   (:require [carpe-diem.ui :as ui]
             [reagent.debug :as debug]
             [reagent.core :as r]
-            [clojure.string :as str]))
+            [carpe-diem.constants :as cnt]
+            [clojure.string :as str]
+            [carpe-diem.login :as login]))
 
 (def form (r/atom {}))
 (def date-part (r/atom {}))
@@ -33,10 +35,8 @@
                  (cond-> (select-keys @form [:resourceType :gender :birthDate])
                          (seq name) (assoc :name [{:use "usual" :text name}])
                          (seq phone) (assoc :telecom [{:system "phone" :value nil}]))))]
-    (-> (js/fetch "https://carpediem.aidbox.io/fhir/Patient"
-                  (clj->js {:method "POST" :headers {"Accept"       "application/json"
-                                                     "Content-Type" "application/json"}
-                            :body json-body}))
+    (-> (js/fetch (str cnt/patient-endpoint "?access_token=" @login/aidbox-token)
+                  (clj->js {:method "POST" :body json-body}))
         (.then (fn [resp]
                  (if (.-ok resp)
                    (.json resp)

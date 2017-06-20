@@ -4,7 +4,7 @@
             [carpe-diem.create-patient :as cp]
             [carpe-diem.patient-info :as pi]
             [reagent.debug :as debug]
-            [carpe-diem.ui :as ui]))
+            [carpe-diem.login :as login]))
 
 (def ReactNative (js/require "react-native"))
 
@@ -17,7 +17,7 @@
     (aset comp "navigationOptions" #js {"title" title})
     comp))
 
-(def stack-router {
+(def stack-router {"Login" {:screen login/login-screen}
                    "Patients" {:screen (nav-wrapper patients/patients-screen "Patients")}
                    "Create" {:screen (nav-wrapper cp/create-patient-screen "Create")}
                    "Info" {:screen (nav-wrapper pi/patient-info-screen "Patient information")}

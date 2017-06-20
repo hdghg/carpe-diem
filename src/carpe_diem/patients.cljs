@@ -1,8 +1,10 @@
 (ns carpe-diem.patients
-  (:require [reagent.core :as r :refer [atom]]
+  (:require [reagent.core :as r]
             [reagent.debug :as debug]
             [carpe-diem.create-patient :as cp]
-            [carpe-diem.ui :as ui]))
+            [carpe-diem.constants :as cnt]
+            [carpe-diem.ui :as ui]
+            [carpe-diem.login :as login]))
 
 (def list-view-ds (js/React.ListView.DataSource.
                     (cljs.core/clj->js {:rowHasChanged #(not= %1 %2)})))
@@ -29,15 +31,14 @@
     (reset! patients (map entry-mapper entries))))
 
 (defn refresh []
-  (-> (js/fetch "https://carpediem.aidbox.io/fhir/Patient"
-                (clj->js {:method "GET" :headers {"Accept"       "application/json"
-                                                  "Content-Type" "application/json"}}))
-      (.then (fn [resp]
-               (if (.-ok resp)
-                 (.json resp)
-                 (-> (.text resp) (.then #(throw (str % " status: " (.-status resp))))))))
-      (.then fill-patients)
-      (.catch (fn [error] (js/console.error error)))))
+  (if @login/aidbox-token
+    (-> (js/fetch (str cnt/patient-endpoint "?access_token=" @login/aidbox-token))
+        (.then (fn [resp]
+                 (if (.-ok resp)
+                   (.json resp)
+                   (-> (.text resp) (.then #(throw (str % " status: " (.-status resp))))))))
+        (.then fill-patients)
+        (.catch (fn [error] (js/console.error error))))))
 
 (defn patients-screen [{nav :navigation :as all}]
   (fn []
