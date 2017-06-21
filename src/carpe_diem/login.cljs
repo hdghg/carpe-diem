@@ -14,7 +14,6 @@
                  (-> (.text resp) (.then #(throw (str % " status: " (.-status resp))))))))
       (.then (fn [json]
                (reset! aidbox-token (.-idp_token json))
-               (js/console.warn @aidbox-token)
                (.navigate nav "Patients")))
       (.catch (fn [error] (js/console.error error))))
   )

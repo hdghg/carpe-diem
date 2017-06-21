@@ -7,6 +7,7 @@
             [carpe-diem.login :as login]))
 
 (def ReactNative (js/require "react-native"))
+(def CookieManager (js/require "react-native-cookies"))
 
 (def AppRegistry (.-AppRegistry ReactNative))
 (def ReactNavigation (js/require "react-navigation"))
@@ -28,4 +29,5 @@
 (defn init []
   (patients/refresh)
   (cp/reset-form)
+  (.clearAll CookieManager (fn [_ _]))
   (.registerComponent AppRegistry "CarpeDiem" #(r/reactify-component sn)))

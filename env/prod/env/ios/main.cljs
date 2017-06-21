@@ -1,5 +1,5 @@
  (ns env.ios.main
-  (:require [carpe-diem.ios.core :as core]))
+  (:require [carpe-diem.core :as core]))
 
  (core/init)
 

@@ -6,14 +6,20 @@
             [clojure.string :as str]
             [carpe-diem.login :as login]))
 
-(def form (r/atom {}))
+(def empty-form {:resourceType  "Patient"
+                 :name-usual    nil
+                 :telecom-phone nil
+                 :gender        "male"
+                 :birthDate     nil})
+
+(def form (r/atom {:resourceType  "Patient"
+                   :name-usual    nil
+                   :telecom-phone nil
+                   :gender        "male"
+                   :birthDate     nil}))
 (def date-part (r/atom {}))
 
-(defn- reset-form [] (reset! form {:resourceType "Patient"
-                              :name-usual nil
-                              :telecom-phone nil
-                              :gender "male"
-                              :birthDate nil}))
+(defn reset-form [] (reset! form empty-form))
 
 (defn- left-pad [n val]
   (if (> n (count (str val))) (left-pad n (str 0 val)) (str val)))
@@ -29,19 +35,23 @@
       (when (not= datestr (:birthDate @form)) (swap! form assoc :birthDate datestr)))))
 
 (defn- submit [success-fn fail-fn]
-  (let [name (:name-usual @form) phone (:telecom-phone @form)
+  (let [name (:name-usual @form) phone (:telecom-phone @form) bd (:birthDate @form)
         json-body (js/JSON.stringify
-               (clj->js
-                 (cond-> (select-keys @form [:resourceType :gender :birthDate])
-                         (seq name) (assoc :name [{:use "usual" :text name}])
-                         (seq phone) (assoc :telecom [{:system "phone" :value nil}]))))]
-    (-> (js/fetch (str cnt/patient-endpoint "?access_token=" @login/aidbox-token)
-                  (clj->js {:method "POST" :body json-body}))
+                    (clj->js
+                      (cond-> (select-keys @form [:resourceType :gender])
+                              (seq bd) (assoc :birthDate bd)
+                              (seq name) (assoc :name [{:use "usual" :text name}])
+                              (seq phone) (assoc :telecom [{:system "phone" :value phone}]))))]
+    (-> (js/fetch cnt/patient-endpoint
+                  (clj->js {:method  "POST" :body json-body
+                            :headers {"Accept"       "application/json"
+                                      "Content-Type" "application/json"
+                                      "Authorization" (str "Bearer " @login/aidbox-token)}}))
         (.then (fn [resp]
                  (if (.-ok resp)
                    (.json resp)
                    (-> (.text resp) (.then #(throw (str % " status: " (.-status resp))))))))
-        (.then (fn [json] (reset-form) (success-fn)))
+        (.then (fn [json] (success-fn) (reset-form)))
         (.catch (fn [error] (js/console.error error))))))
 
 (defn create-patient-screen [{nav :navigation}]

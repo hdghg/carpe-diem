@@ -15,8 +15,8 @@
 (defn render-patient [{:keys [name-usual id birthDate] :as person} nav]
   [ui/touchable {:on-press #(.navigate nav "Info" person)}
    [ui/view {:style {}}
-    [ui/text {:style {:font-size 20 :font-weight "bold"}} name-usual]
-    [ui/text birthDate]]])
+    [ui/text {:style {:font-size 20 :font-weight "bold"}} (or name-usual "UNKNOWN")]
+    [ui/text (or birthDate "unknown")]]])
 
 (defn entry-mapper [entry-element]
   (let [resource (:resource entry-element)]
@@ -27,7 +27,6 @@
 (defn fill-patients [json]
   (let [data (js->clj json :keywordize-keys true)
         entries (:entry data)]
-    ;(ui/alert (js/JSON.stringify (clj->js data)))
     (reset! patients (map entry-mapper entries))))
 
 (defn refresh []
