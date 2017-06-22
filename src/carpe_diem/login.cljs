@@ -2,7 +2,8 @@
   (:require [reagent.core :as r]
             [carpe-diem.ui :as ui]
             [carpe-diem.constants :as cnt]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [carpe-diem.utils :as utils]))
 
 (def aidbox-token (atom nil))
 
@@ -14,7 +15,7 @@
                  (-> (.text resp) (.then #(throw (str % " status: " (.-status resp))))))))
       (.then (fn [json]
                (reset! aidbox-token (.-idp_token json))
-               (.navigate nav "Patients")))
+               (.dispatch nav utils/reset)))
       (.catch (fn [error] (js/console.error error))))
   )
 

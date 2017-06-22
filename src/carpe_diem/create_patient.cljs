@@ -12,11 +12,7 @@
                  :gender        "male"
                  :birthDate     nil})
 
-(def form (r/atom {:resourceType  "Patient"
-                   :name-usual    nil
-                   :telecom-phone nil
-                   :gender        "male"
-                   :birthDate     nil}))
+(def form (r/atom empty-form))
 (def date-part (r/atom {}))
 
 (defn reset-form [] (reset! form empty-form))
@@ -34,23 +30,26 @@
       (when (:birthDate @form) (swap! form assoc :birthDate nil))
       (when (not= datestr (:birthDate @form)) (swap! form assoc :birthDate datestr)))))
 
-(defn- submit [success-fn fail-fn]
+(defn- submit [success-fn fail-fn nav]
   (let [name (:name-usual @form) phone (:telecom-phone @form) bd (:birthDate @form)
         json-body (js/JSON.stringify
                     (clj->js
                       (cond-> (select-keys @form [:resourceType :gender])
                               (seq bd) (assoc :birthDate bd)
                               (seq name) (assoc :name [{:use "usual" :text name}])
-                              (seq phone) (assoc :telecom [{:system "phone" :value phone}]))))]
+                              (seq phone) (assoc :telecom [{:system "phone" :value phone}]))))
+        token @login/aidbox-token
+        headers (cond-> {"Accept"       "application/json"
+                         "Content-Type" "application/json"}
+                        token (assoc "Authorization" (str "Bearer " token)))]
     (-> (js/fetch cnt/patient-endpoint
-                  (clj->js {:method  "POST" :body json-body
-                            :headers {"Accept"       "application/json"
-                                      "Content-Type" "application/json"
-                                      "Authorization" (str "Bearer " @login/aidbox-token)}}))
+                  (clj->js {:method "POST" :body json-body :headers headers}))
         (.then (fn [resp]
                  (if (.-ok resp)
                    (.json resp)
-                   (-> (.text resp) (.then #(throw (str % " status: " (.-status resp))))))))
+                   (if (= 403 (.-status resp))
+                     (.navigate nav "Login")
+                     (-> (.text resp) (.then #(throw (str % " status: " (.-status resp)))))))))
         (.then (fn [json] (success-fn) (reset-form)))
         (.catch (fn [error] (js/console.error error))))))
 
@@ -73,6 +72,7 @@
     [ui/input {:placeholder "month" :style {:flex 1} :on-change-text (partial update-date-part :month)}]
     [ui/input {:placeholder "day" :style {:flex 1} :on-change-text (partial update-date-part :day)}]]
    ;[ui/text (js/JSON.stringify (clj->js @form))]
-   [ui/button {:title "Submit" :on-press (fn [] (submit #(.goBack nav) #(ui/alert (js/JSON.stringify %))))}]
+   [ui/button {:title "Submit"
+               :on-press (fn [] (submit #(.goBack nav) #(ui/alert (js/JSON.stringify %)) nav))}]
    ])
 
